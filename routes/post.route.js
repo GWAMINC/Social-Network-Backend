@@ -4,6 +4,6 @@ import isAuthenticated from "../middlewares/isAuthenticated.js";
 
 const router = express.Router();
 
-router.route("/createPost").post(isAuthenticated, createPost);
+router.route("/createPost").post( createPost);
 
 export default router;

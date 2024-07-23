@@ -44,10 +44,11 @@ export const createPost = async (req, res) => {
         await wall.save();
 
         res.status(200).json({
-            message: "Post successfully",
+            message: "Post created successfully",
             wall,
             success: true,
         });
+        console.log("Post created successfully");
     } catch (error) {
         console.log(error);
     }
