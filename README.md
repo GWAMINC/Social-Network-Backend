@@ -1,3 +1,4 @@
 Build project:
-- chạy "npm install express mongoose nodemon jsonwebtoken bcryptjs cookie-parser dotenv cors"
-- chạy "npm run dev"
+- Tạo file .env và copy nội dung trong phần document
+- Chạy npm install
+- Chạy npm run dev
