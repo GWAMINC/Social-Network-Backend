@@ -53,3 +53,77 @@ export const createPost = async (req, res) => {
         console.log(error);
     }
 }
+
+export const updatePost = async (req, res) => {
+    try {
+        const {postId, content, access} = req.body;
+
+        if (!postId || !content || !access){
+            return res.status(400).json({
+                message: "Something is missing",
+                success: false,
+            })
+        }
+
+        const post = await Post.findById(postId);
+
+        if (!post) {
+            return res.status(400).json({
+                message: "Post not found",
+                success: false,
+            })
+        }
+
+        post.content = content;
+        post.access = access;
+        post.updatedAt = Date.now();
+
+
+        await post.save();
+
+        res.status(200).json({
+            message: "Post updated successfully",
+            success: true,
+        });
+        console.log("Post updated successfully");
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export const deletePost = async (req, res) => {
+    try {
+        const {postId} = req.body;
+
+        if (!postId) {
+            return res.status(400).json({
+                message: "Something is missing",
+                success: false,
+            })
+        }
+
+        const post = await Post.findById(postId);
+        if (!post) {
+            return res.status(400).json({
+                message: "Post not found",
+                success: false,
+            })
+        }
+
+        await post.deleteOne();
+        let wall = await Wall.findOne({owner: post.userID});
+        const postIndex = wall.posts.indexOf(postId);
+        if (postIndex > -1) {
+            wall.posts.splice(postIndex, 1);
+            await wall.save();
+        }
+
+        res.status(200).json({
+            message: "Post is deleted ",
+            success: true,
+        });
+        console.log("Post is deleted");
+    } catch (error) {
+        console.log(error);
+    }
+}
