@@ -104,7 +104,7 @@ export const logout = async (req, res) => {
 export const updateProfile = async (req, res) => {
     try {
         const { name, email, phoneNumber, bio, birthDate } = req.body;
-        if (!name || !email || !phoneNumber || !bio || !birthDate) {
+        if (!name || !email || !phoneNumber) {
             return res.status(400).json({
                 message: "Something is missing",
                 success: false,
@@ -119,6 +119,17 @@ export const updateProfile = async (req, res) => {
                 success: false,
             })
         }
+        
+        if (email !== user.email) {
+            const existingUser = await User.findOne({ email });
+            if (existingUser) {
+                return res.status(400).json({
+                    message: "Email already in use",
+                    success: false,
+                });
+            }
+        }
+
         user.name = name,
             user.email = email,
             user.phoneNumber = phoneNumber,

@@ -2,6 +2,7 @@ import express from "express";
 import {login, register, logout, updateProfile} from "../controllers/user.controller.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 
+
 const router = express.Router();
 
 router.route("/register").post(register);
