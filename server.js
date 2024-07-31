@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import connectDB from "./utils/db.js"
 import userRoute from "./routes/user.route.js";
 import postRoute from "./routes/post.route.js";
-import commentRoutes from "./routes/comment.route.js";
+
 dotenv.config({});
 
 const app = express();
