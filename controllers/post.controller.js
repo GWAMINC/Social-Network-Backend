@@ -2,6 +2,7 @@ import {Post} from "../models/post.model.js";
 import {User} from "../models/user.model.js";
 import {Wall} from "../models/wall.model.js";
 import {deleteImage, uploadImage} from "../controllers/media.controller.js";
+import fs from 'fs/promises';
 export const createPost = async (req, res) => {
     try {
         const {userId, content, access} = req.body;
@@ -45,9 +46,17 @@ export const createPost = async (req, res) => {
         } else {
             wall.posts.push(post._id);
         }
-
         await post.save();
         await wall.save();
+
+        //delete temporary files
+        for (const image of images) {
+            try {
+                await fs.unlink(image);
+            } catch (error) {
+                console.log(error);
+            }
+        }
 
         res.status(200).json({
             message: "Post created successfully",
