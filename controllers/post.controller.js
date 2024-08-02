@@ -30,7 +30,7 @@ export const createPost = async (req, res) => {
         }
 
         const post = new Post({
-            userID: user._id,
+            userId: user._id,
             author: user.name,
             content: content,
             access: access,
@@ -64,6 +64,27 @@ export const createPost = async (req, res) => {
             success: true,
         });
         console.log("Post created successfully");
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export const getPostById = async (req, res) => {
+    try {
+        const {postId} = req.body;
+
+        const post = await Post.findById(postId);
+        if (!post) {
+            return res.status(400).json({
+                message: "Post not found",
+                success: false,
+            })
+        }
+
+        res.status(200).json({
+            post,
+            success: true,
+        });
     } catch (error) {
         console.log(error);
     }
@@ -127,7 +148,7 @@ export const deletePost = async (req, res) => {
 
         await deleteImage(post.images); // delete image from cloudinary
         await post.deleteOne(); // delete post from database
-        let wall = await Wall.findOne({owner: post.userID});
+        let wall = await Wall.findOne({owner: post.userId});
         const postIndex = wall.posts.indexOf(postId);
         if (postIndex > -1) {
             wall.posts.splice(postIndex, 1); // delete post from wall
