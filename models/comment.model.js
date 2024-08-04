@@ -1,34 +1,23 @@
 import mongoose from "mongoose";
-
 const commentSchema = new mongoose.Schema({
-    postID: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'Post'
-    },
-    author: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'User'
-    },
-    content: {
+    author: {  // Thay đổi đây từ ObjectId sang String
         type: String,
-        required: true,
+        required: true
     },
-    isLiked: [{
+    content:{
+        type: String,
+        required: true
+    },
+    isLike:[{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-    }],
-    createdAt: {
-        type: Date,
-        required: true,
-        default: Date.now
-    },
-    updatedAt: {
-        type: Date,
-        required: true,
-        default: Date.now
-    }
-});
+        ref:'User'
+    }]
+},{timestamps: true})
+
+
+
+
+
+
 
 export const Comment = mongoose.model("Comment", commentSchema);

@@ -2,17 +2,39 @@ import {Comment} from "../models/comment.model.js";
 import {Post} from "../models/post.model.js";
 import {User} from "../models/user.model.js";
 
+
 export const createComment = async (req, res) => {
     try {
-        const {postID, authorID, content} = req.body;
+        const { postID, userID, content } = req.body;
 
-        if (!postID || !authorID || !content) {
+        if (!postID || !userID || !content) {
             return res.status(400).json({
                 message: "Something is missing",
                 success: false,
             });
         }
 
+        // Tìm user theo userID
+        const user = await User.findById(userID);
+        if (!user) {
+            return res.status(400).json({
+                message: "User not found",
+                success: false,
+            });
+        }
+
+        // Tạo đối tượng comment mới
+        const comment = new Comment({
+            postID: postID,
+            userID: user._id,
+            author: user.name,
+            content: content,
+        });
+
+        // Lưu comment vào cơ sở dữ liệu
+        await comment.save();
+
+        // Thêm comment vào post tương ứng
         const post = await Post.findById(postID);
         if (!post) {
             return res.status(400).json({
@@ -21,21 +43,7 @@ export const createComment = async (req, res) => {
             });
         }
 
-        const user = await User.findById(authorID);
-        if (!user) {
-            return res.status(400).json({
-                message: "User not found",
-                success: false,
-            });
-        }
-
-        const comment = new Comment({
-            postID: post._id,
-            author: user._id,
-            content: content
-        });
-
-        await comment.save();
+        await post.save();
 
         res.status(201).json({
             message: "Comment created successfully",
@@ -45,51 +53,25 @@ export const createComment = async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(500).json({
-            message: "Internal Server Error",
+            message: "Internal server error",
             success: false,
         });
     }
-}
-
-export const getComments = async (req, res) => {
-    try {
-        const {postID} = req.params;
-
-        if (!postID) {
-            return res.status(400).json({
-                message: "Post ID is missing",
-                success: false,
-            });
-        }
-
-        const comments = await Comment.find({postID}).populate('author', 'name');
-
-        res.status(200).json({
-            message: "Comments retrieved successfully",
-            comments,
-            success: true,
-        });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({
-            message: "Internal Server Error",
-            success: false,
-        });
-    }
-}
+};
 
 export const updateComment = async (req, res) => {
     try {
-        const {commentID, content} = req.body;
+        const { commentId, content } = req.body;
 
-        if (!commentID || !content) {
+        if (!commentId || !content) {
             return res.status(400).json({
                 message: "Something is missing",
                 success: false,
             });
         }
 
-        const comment = await Comment.findById(commentID);
+        const comment = await Comment.findById(commentId);
+
         if (!comment) {
             return res.status(400).json({
                 message: "Comment not found",
@@ -104,30 +86,26 @@ export const updateComment = async (req, res) => {
 
         res.status(200).json({
             message: "Comment updated successfully",
-            comment,
             success: true,
         });
+        console.log("Comment updated successfully");
     } catch (error) {
         console.log(error);
-        res.status(500).json({
-            message: "Internal Server Error",
-            success: false,
-        });
     }
-}
+};
 
 export const deleteComment = async (req, res) => {
     try {
-        const {commentID} = req.body;
+        const { commentId } = req.body;
 
-        if (!commentID) {
+        if (!commentId) {
             return res.status(400).json({
-                message: "Comment ID is missing",
+                message: "Something is missing",
                 success: false,
             });
         }
 
-        const comment = await Comment.findById(commentID);
+        const comment = await Comment.findById(commentId);
         if (!comment) {
             return res.status(400).json({
                 message: "Comment not found",
@@ -141,11 +119,8 @@ export const deleteComment = async (req, res) => {
             message: "Comment deleted successfully",
             success: true,
         });
+        console.log("Comment deleted successfully");
     } catch (error) {
         console.log(error);
-        res.status(500).json({
-            message: "Internal Server Error",
-            success: false,
-        });
     }
-}
+};
