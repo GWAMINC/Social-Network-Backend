@@ -1,10 +1,12 @@
+import { Feed } from "../models/feed.model.js";
 import {Post} from "../models/post.model.js";
 import {User} from "../models/user.model.js";
 import {Wall} from "../models/wall.model.js";
 
 export const createPost = async (req, res) => {
     try {
-        const {userId, content, access} = req.body;
+        const userId =req.id;
+        const {content, access} = req.body;
 
         if (!userId || !content || !access) {
             return res.status(400).json({
@@ -42,6 +44,18 @@ export const createPost = async (req, res) => {
         }
 
         await wall.save();
+        let feed = await Feed.findOne({owner: user._id});
+
+        if (!feed) {
+            feed = new Feed ({
+                owner: user._id,
+                posts: [post._id]
+            })
+        } else {
+            feed.posts.push(post._id);
+        }
+
+        await feed.save();
 
         res.status(200).json({
             message: "Post created successfully",
@@ -116,6 +130,12 @@ export const deletePost = async (req, res) => {
         if (postIndex > -1) {
             wall.posts.splice(postIndex, 1);
             await wall.save();
+        }
+        let feed = await Feed.findOne({owner: feed.userID});
+        const postIdx = feed.posts.indexOf(postId);
+        if (postIdx > -1) {
+            feed.posts.splice(postIdx, 1);
+            await feed.save();
         }
 
         res.status(200).json({
