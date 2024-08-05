@@ -6,6 +6,9 @@ import connectDB from "./utils/db.js";
 import userRoute from "./routes/user.route.js";
 import postRoute from "./routes/post.route.js";
 
+import commentRoute from "./routes/comment.route.js";
+
+
 import wallfeedRoute from "./routes/wall-feed.route.js";
 import chatRouter from "./routes/chat.route.js";
 import messageRouter from "./routes/message.router.js"
@@ -32,6 +35,8 @@ const PORT = process.env.PORT || 3000;
 
 app.use("/api/user", userRoute);
 app.use("/api/post", postRoute);
+app.use("/api/comment", commentRoute);
+
 
 app.use("/api", wallfeedRoute);
 app.use("/api",chatRouter);
@@ -41,6 +46,12 @@ app.use("/api/notification", notiRoute);
 
 
 app.listen(PORT, () => {
-  connectDB();
-  console.log(`server is running on port ${PORT}`);
-});
+
+    connectDB();
+    console.log(`server is running on port ${PORT}`);
+})
+
+
+
+
+
