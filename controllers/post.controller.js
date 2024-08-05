@@ -1,10 +1,23 @@
+import { Feed } from "../models/feed.model.js";
 import {Post} from "../models/post.model.js";
 import {User} from "../models/user.model.js";
 import {Wall} from "../models/wall.model.js";
-
+import {deleteImage, uploadImage} from "../controllers/media.controller.js";
+import fs from 'fs/promises';
 export const createPost = async (req, res) => {
     try {
-        const {userId, content, access} = req.body;
+
+        const userId =req.id;
+        const {content, access} = req.body;
+
+        let images = [];
+        try{
+            images = req.files.map(file => file.path);
+        }catch (error){
+            console.log(error);
+        }
+        const uploadedImages = await uploadImage(images);
+
 
         if (!userId || !content || !access) {
             return res.status(400).json({
@@ -22,16 +35,14 @@ export const createPost = async (req, res) => {
         }
 
         const post = new Post({
-            userID: user._id,
+            userId: user._id,
             author: user.name,
             content: content,
-            access: access
+            access: access,
+            images : uploadedImages,
         })
 
-        await post.save();
-
         let wall = await Wall.findOne({owner: user._id});
-
         if (!wall) {
             wall = new Wall ({
                 owner: user._id,
@@ -40,8 +51,29 @@ export const createPost = async (req, res) => {
         } else {
             wall.posts.push(post._id);
         }
-
+        await post.save();
         await wall.save();
+        let feed = await Feed.findOne({owner: user._id});
+
+        if (!feed) {
+            feed = new Feed ({
+                owner: user._id,
+                posts: [post._id]
+            })
+        } else {
+            feed.posts.push(post._id);
+        }
+
+        await feed.save();
+
+        //delete temporary files
+        for (const image of images) {
+            try {
+                await fs.unlink(image);
+            } catch (error) {
+                console.log(error);
+            }
+        }
 
         res.status(200).json({
             message: "Post created successfully",
@@ -49,6 +81,27 @@ export const createPost = async (req, res) => {
             success: true,
         });
         console.log("Post created successfully");
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export const getPostById = async (req, res) => {
+    try {
+        const {postId} = req.body;
+
+        const post = await Post.findById(postId);
+        if (!post) {
+            return res.status(400).json({
+                message: "Post not found",
+                success: false,
+            })
+        }
+
+        res.status(200).json({
+            post,
+            success: true,
+        });
     } catch (error) {
         console.log(error);
     }
@@ -110,12 +163,19 @@ export const deletePost = async (req, res) => {
             })
         }
 
-        await post.deleteOne();
-        let wall = await Wall.findOne({owner: post.userID});
+        await deleteImage(post.images); // delete image from cloudinary
+        await post.deleteOne(); // delete post from database
+        let wall = await Wall.findOne({owner: post.userId});
         const postIndex = wall.posts.indexOf(postId);
         if (postIndex > -1) {
-            wall.posts.splice(postIndex, 1);
+            wall.posts.splice(postIndex, 1); // delete post from wall
             await wall.save();
+        }
+        let feed = await Feed.findOne({owner: feed.userID});
+        const postIdx = feed.posts.indexOf(postId);
+        if (postIdx > -1) {
+            feed.posts.splice(postIdx, 1);
+            await feed.save();
         }
 
         res.status(200).json({

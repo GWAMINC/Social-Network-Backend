@@ -1,6 +1,8 @@
 import {User} from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { Wall } from "../models/wall.model.js";
+import { Feed } from "../models/feed.model.js";
 export const register = async (req, res) => {
     try {
         const { name, email, password, phoneNumber, role } = req.body;
@@ -19,13 +21,19 @@ export const register = async (req, res) => {
         }
         const hashPassword = await bcrypt.hash(password, 10);
 
-        await User.create({
+        const newUser = await User.create({
             name,
             email,
             password: hashPassword,
             phoneNumber,
-            role
-        })
+            role,
+        });
+        await Wall.create({
+            owner: newUser._id,
+        });
+        await Feed.create({
+            owner: newUser._id,
+        });
         return res.status(201).json({
             message: "User created successfully",
             success: true,
@@ -104,7 +112,7 @@ export const logout = async (req, res) => {
 export const updateProfile = async (req, res) => {
     try {
         const { name, email, phoneNumber, bio, birthDate } = req.body;
-        if (!name || !email || !phoneNumber || !bio || !birthDate) {
+        if (!name || !email || !phoneNumber) {
             return res.status(400).json({
                 message: "Something is missing",
                 success: false,
@@ -144,3 +152,16 @@ export const updateProfile = async (req, res) => {
         console.log(error);
     }
 }
+export const getProfile = async (req, res) => {
+    try {
+        const userId = req.id;
+        const user = await User.findById(userId);
+
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        return res.status(200).json({ user, success: true });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
