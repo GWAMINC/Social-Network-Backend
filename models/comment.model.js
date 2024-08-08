@@ -1,5 +1,16 @@
 import mongoose from "mongoose";
 const commentSchema = new mongoose.Schema({
+    userId:{
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref:"User"
+    },
+    postId:{
+        type: mongoose.Schema.Types.ObjectId,
+        required:true,
+        ref:"Post"
+    },
+
     author: {  // Thay đổi đây từ ObjectId sang String
         type: String,
         required: true
