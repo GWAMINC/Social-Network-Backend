@@ -1,4 +1,4 @@
-import { Feed } from "../models/feed.model.js";
+import {Feed} from "../models/feed.model.js";
 import {Post} from "../models/post.model.js";
 import {User} from "../models/user.model.js";
 import {Wall} from "../models/wall.model.js";
@@ -6,7 +6,6 @@ import {deleteImage, uploadImage} from "../controllers/media.controller.js";
 import fs from 'fs/promises';
 export const createPost = async (req, res) => {
     try {
-
         const userId =req.id;
         const {content, access} = req.body;
 
@@ -89,7 +88,6 @@ export const createPost = async (req, res) => {
 export const getPostById = async (req, res) => {
     try {
         const {postId} = req.body;
-
         const post = await Post.findById(postId);
         if (!post) {
             return res.status(400).json({
@@ -171,7 +169,7 @@ export const deletePost = async (req, res) => {
             wall.posts.splice(postIndex, 1); // delete post from wall
             await wall.save();
         }
-        let feed = await Feed.findOne({owner: feed.userID});
+        let feed = await Feed.findOne({owner: post.userId});
         const postIdx = feed.posts.indexOf(postId);
         if (postIdx > -1) {
             feed.posts.splice(postIdx, 1);
@@ -183,6 +181,96 @@ export const deletePost = async (req, res) => {
             success: true,
         });
         console.log("Post is deleted");
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export const likePost = async (req, res) => {
+    try {
+        const userId = req.id;
+        const {postId} = req.body;
+
+        const post = await Post.findById(postId);
+        if (!post) {
+            return res.status(400).json({
+                message: "Post not found",
+                success: false,
+            })
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(400).json({
+                message: "User not found",
+                success: false,
+            })
+        }
+
+        if (post.isLiked.includes(user._id)) {
+            await post.isLiked.pull(user._id);
+            await post.save();
+            return res.status(400).json({
+                message: "Unliked post",
+                success: true,
+            })
+        }
+        else {
+            if (post.isDisliked.includes(user._id)) {
+                await post.isDisliked.pull(user._id);
+            }
+            await post.isLiked.push(user._id);
+            await post.save();
+            res.status(200).json({
+                message: "Liked post",
+                success: true,
+            });
+        }
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export const dislikePost = async (req, res) => {
+    try {
+        const userId = req.id;
+        const {postId} = req.body;
+
+        const post = await Post.findById(postId);
+        if (!post) {
+            return res.status(400).json({
+                message: "Post not found",
+                success: false,
+            })
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(400).json({
+                message: "User not found",
+                success: false,
+            })
+        }
+
+        if (post.isDisliked.includes(user._id)) {
+            await post.isDisliked.pull(user._id);
+            await post.save();
+            return res.status(400).json({
+                message: "Undisliked post",
+                success: true,
+            })
+        }
+        else {
+            if (post.isLiked.includes(user._id)) {
+                await post.isLiked.pull(user._id);
+            }
+            await post.isDisliked.push(user._id);
+            await post.save();
+            res.status(200).json({
+                message: "Disliked post",
+                success: true,
+            });
+        }
     } catch (error) {
         console.log(error);
     }
