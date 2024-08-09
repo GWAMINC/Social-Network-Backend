@@ -165,3 +165,73 @@ export const getProfile = async (req, res) => {
         return res.status(500).json({ message: 'Server error' });
     }
 };
+
+export const followUser = async (req, res) => {
+    try {
+        const userId = req.id;
+        const {followedId} = req.body;
+
+        const user = await User.findById(userId);
+        const followedUser = await User.findById(followedId);
+        if (!user || !followedUser) {
+            return res.status(400).json({
+                message: "User not found",
+                success: false,
+            })
+        }
+        if (user.following.includes(followedId)) {
+            return res.status(400).json({
+                message: "This user already followed",
+                success: false,
+            })
+        }
+
+        user.following.push(followedId);
+        followedUser.isFollowed.push(userId);
+
+        await user.save();
+        await followedUser.save();
+
+        return res.status(200).json({
+            message: "Follow "+followedUser.name +" successfully",
+            success: true,
+        })
+
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export const unfollowUser = async (req, res) => {
+    try {
+        const userId = req.id;
+        const {unfollowedId} = req.body;
+
+        const user = await User.findById(userId);
+        const unfollowedUser = await User.findById(unfollowedId);
+        if (!user || !unfollowedUser || userId === unfollowedId) {
+            return res.status(400).json({
+                message: "User not found",
+                success: false,
+            })
+        }
+        if (!user.following.includes(unfollowedId)) {
+            return res.status(400).json({
+                message: "This user already unfollowed",
+                success: false,
+            })
+        }
+        user.following.pull(unfollowedId);
+        unfollowedUser.isFollowed.pull(userId);
+
+        await user.save();
+        await unfollowedUser.save();
+
+        return res.status(200).json({
+            message: "Unfollow "+unfollowedUser.name +" successfully",
+            success: true,
+        })
+    } catch (error) {
+        console.log(error);
+    }
+}
