@@ -15,6 +15,8 @@ import messageRouter from "./routes/message.router.js"
 
 import notiRoute from "./routes/notification.route.js";
 
+import GroupRoute from "./routes/group.route.js";
+
 dotenv.config({});
 
 const app = express();
@@ -44,6 +46,7 @@ app.use("/api/messahe",messageRouter)
 
 app.use("/api/notification", notiRoute);
 
+app.use("/api/Group", GroupRoute);
 
 app.listen(PORT, () => {
 
