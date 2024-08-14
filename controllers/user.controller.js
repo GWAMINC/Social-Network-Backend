@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { Wall } from "../models/wall.model.js";
 import { Feed } from "../models/feed.model.js";
+import {Post} from "../models/post.model.js";
 export const register = async (req, res) => {
     try {
         const { name, email, password, phoneNumber, role } = req.body;
@@ -45,6 +46,7 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
     try {
+        console.log(req.body);
         const { email, password, role } = req.body;
         if (!email || !password || !role) {
             return res.status(400).json({
@@ -231,6 +233,19 @@ export const unfollowUser = async (req, res) => {
             message: "Unfollow "+unfollowedUser.name +" successfully",
             success: true,
         })
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export const getUserByPostId = async (postId) => {
+    try {
+        const post = await Post.findById(postId);
+        if (!post) {
+            return null;
+        }
+        const user = await User.findById(post.userId);
+        return user;
     } catch (error) {
         console.log(error);
     }
