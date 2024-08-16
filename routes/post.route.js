@@ -11,5 +11,5 @@ router.route("/updatePost").post(isAuthenticated,updatePost);
 router.route("/deletePost").post(isAuthenticated,deletePost);
 router.route("/likePost").post(isAuthenticated,likePost);
 router.route("/dislikePost").post(isAuthenticated,dislikePost);
-router.route("/getAllPost").post(isAuthenticated,getAllPost);
+router.route("/getAllPost").get(isAuthenticated,getAllPost);
 export default router;
