@@ -87,6 +87,7 @@ export const createPost = async (req, res) => {
 }
 export const getAllPost = async (req, res) => {
     try {
+        const userId = req.id;
         const posts = await Post.find();
         if (!posts) {
             return res.status(400).json({
@@ -101,7 +102,8 @@ export const getAllPost = async (req, res) => {
                 postInfo: post,
                 userInfo: owner,
                 likeCount: post.isLiked.length,
-                dislikeCount: post.isDisliked.length
+                dislikeCount: post.isDisliked.length,
+                user: userId,
             });
         }
 
@@ -219,7 +221,7 @@ export const deletePost = async (req, res) => {
   }
 }
 
-export const likePost = async (req, res) => {
+  export const likePost = async (req, res) => {
   try {
     const userId = req.id;
     const {postId} = req.body;
@@ -239,11 +241,10 @@ export const likePost = async (req, res) => {
         success: false,
       })
     }
-
     if (post.isLiked.includes(user._id)) {
       await post.isLiked.pull(user._id);
       await post.save();
-      return res.status(400).json({
+      res.status(200).json({
         message: "Unliked post",
         success: true,
       })
@@ -288,7 +289,7 @@ export const dislikePost = async (req, res) => {
     if (post.isDisliked.includes(user._id)) {
       await post.isDisliked.pull(user._id);
       await post.save();
-      return res.status(400).json({
+      res.status(200).json({
         message: "Undisliked post",
         success: true,
       })
