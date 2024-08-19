@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { Wall } from "../models/wall.model.js";
 import { Feed } from "../models/feed.model.js";
+import {Post} from "../models/post.model.js";
 export const register = async (req, res) => {
   try {
     const { name, email, password, phoneNumber, role } = req.body;
@@ -219,6 +220,7 @@ export const followUser = async (req, res) => {
 };
 
 export const unfollowUser = async (req, res) => {
+
   try {
     const userId = req.id;
     const { unfollowedId } = req.body;
@@ -343,3 +345,18 @@ export const getFriends = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+export const getUserByPostId = async (postId) => {
+    try {
+        const post = await Post.findById(postId);
+        if (!post) {
+            return null;
+        }
+        const user = await User.findById(post.userId);
+        return user;
+    } catch (error) {
+        console.log(error);
+    }
+}
+

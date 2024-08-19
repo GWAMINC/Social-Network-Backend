@@ -3,6 +3,7 @@ import {Post} from "../models/post.model.js";
 import {User} from "../models/user.model.js";
 import {Wall} from "../models/wall.model.js";
 import {deleteImage, uploadImage} from "../controllers/media.controller.js";
+import {getUserByPostId} from "./user.controller.js";
 import fs from 'fs/promises';
 export const createPost = async (req, res) => {
   try {
@@ -84,7 +85,41 @@ export const createPost = async (req, res) => {
     console.log(error);
   }
 }
+export const getAllPost = async (req, res) => {
+    try {
+        const userId = req.id;
+        const posts = await Post.find();
+        if (!posts) {
+            return res.status(400).json({
+                message: "No post found",
+                success: false,
+            })
+        }
+        const data = [];
+        for (let post of posts) {
+            const owner = await getUserByPostId(post._id);
+            data.push({
+                postInfo: post,
+                userInfo: owner,
+                likeCount: post.isLiked.length,
+                dislikeCount: post.isDisliked.length,
+                user: userId,
+            });
+        }
 
+        return res.status(200).json({
+            posts : data,
+            success: true,
+        });
+    } catch (error) {
+        console.log(error);
+
+        return res.status(500).json({
+            message: "An error occurred while fetching posts",
+            success: false,
+        });
+    }
+}
 export const getPostById = async (req, res) => {
   try {
     const {postId} = req.body;
@@ -186,7 +221,7 @@ export const deletePost = async (req, res) => {
   }
 }
 
-export const likePost = async (req, res) => {
+  export const likePost = async (req, res) => {
   try {
     const userId = req.id;
     const {postId} = req.body;
@@ -206,11 +241,10 @@ export const likePost = async (req, res) => {
         success: false,
       })
     }
-
     if (post.isLiked.includes(user._id)) {
       await post.isLiked.pull(user._id);
       await post.save();
-      return res.status(400).json({
+      res.status(200).json({
         message: "Unliked post",
         success: true,
       })
@@ -255,7 +289,7 @@ export const dislikePost = async (req, res) => {
     if (post.isDisliked.includes(user._id)) {
       await post.isDisliked.pull(user._id);
       await post.save();
-      return res.status(400).json({
+      res.status(200).json({
         message: "Undisliked post",
         success: true,
       })
