@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { Wall } from "../models/wall.model.js";
 import { Feed } from "../models/feed.model.js";
-import {Post} from "../models/post.model.js";
+import { Post } from "../models/post.model.js";
 export const register = async (req, res) => {
   try {
     const { name, email, password, phoneNumber, role } = req.body;
@@ -263,9 +263,13 @@ export const addFriend = async (req, res) => {
   }
   try {
     
-    const [user, friend] = await Promise.all([
+    const [user, friend, userFeed, friendFeed, userWall, friendWall] = await Promise.all([
       User.findById(userId).exec(),
-      User.findById(friendId).exec()
+      User.findById(friendId).exec(),
+      Feed.findOne({ owner: userId }).exec(),
+      Feed.findOne({ owner: friendId }).exec(),
+      Wall.findOne({ owner: userId }).exec(),
+      Wall.findOne({ owner: friendId }).exec()
     ]);
     if (!user) {
       return res.status(404).json({ message: "Người dùng không tồn tại." });
@@ -277,18 +281,18 @@ export const addFriend = async (req, res) => {
     if (user.isFriend.includes(friendId)) {
       return res.status(400).json({ message: "Bạn đã là bạn bè với người dùng này." });
     }
-    if (friend.isFriend.includes(userId)) {
-      return res.status(400).json({ message: "Người dùng này đã là bạn bè với bạn." });
-    }
     if (userId === friendId) {
       return res.status(400).json({ message: "Không thể thêm chính mình làm bạn." });
     }
 
     user.isFriend.push(friendId);
     await user.save();
-
     friend.isFriend.push(userId);
     await friend.save();
+    userFeed.posts = userFeed.posts.concat(friendWall.posts);
+    await userFeed.save();
+    friendFeed.posts = friendFeed.posts.concat(userWall.posts);
+    await friendFeed.save();
 
     res.status(200).json({ message: "Thêm bạn thành công." });
   } catch (error) {
@@ -301,8 +305,14 @@ export const deleteFriend = async (req, res) => {
   const userId = req.id;
   const { unFriendId } = req.body;
   try {
-    const user = await User.findById(userId);
-    const unFriend = await User.findById(unFriendId);
+    const [user, unFriend, userFeed, unFriendFeed, userWall, unFriendWall] = await Promise.all([
+      User.findById(userId).exec(),
+      User.findById(unFriendId).exec(),
+      Feed.findOne({ owner: userId }).exec(),
+      Feed.findOne({ owner: unFriendId }).exec(),
+      Wall.findOne({ owner: userId }).exec(),
+      Wall.findOne({ owner: unFriendId }).exec()
+    ]);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -312,15 +322,21 @@ export const deleteFriend = async (req, res) => {
     if (!user.isFriend.includes(unFriendId)) {
       return res
         .status(404)
-        .json({ message: "user and unfriend not friends yet" });
+        .json({ message: "You and "+ unFriend.name + " not friends yet" });
     }
     user.isFriend.pull(unFriendId);
     await user.save();
     unFriend.isFriend.pull(userId);
     await unFriend.save();
+    userFeed.posts = userFeed.posts.filter(postId => !unFriendWall.posts.includes(postId));
+    await userFeed.save();
+    unFriendFeed.posts = unFriendFeed.posts.filter(postId => !userWall.posts.includes(postId));
+    await unFriendFeed.save();
+
     return res.status(200).json({ message: "UnFriend successully" });
   } catch (error) {
-    return res.status(500).json({ message: "Sever error" });
+    console.log(error);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
