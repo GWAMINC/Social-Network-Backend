@@ -119,14 +119,46 @@ export const logout = async (req, res) => {
   }
 };
 
-export const getAllusser = async (req, res) => {
+// export const getAllusser = async (req, res) => {
+//   const userId=req.id;
+//   try {
+//     const currentUser =await User.findById(userId).populate('isFiend');
+//     const friendIds = currentUser.isFriend.map(friend => friend._id);
+//     const users = await User.find({
+//       _id: { $ne: userId }, 
+//       _id: { $nin: friendIds}
+//     }, "name profile.profilePhoto");
+
+//     return res.status(200).json(users);
+//   } catch (error) {
+//     res.status(500).json({ message: error });
+//   }
+// };
+export const getAllusers = async (req, res) => {
+  const userId = req.id;
   try {
-    const users = await User.find({}, "name profile.profilePhoto");
+    const currentUser = await User.findById(userId).populate('isFriend');
+
+    if (!currentUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const friendIds = currentUser.isFriend.map(friend => friend._id);
+
+    const users = await User.find({
+      $and: [
+        { _id: { $ne: userId } },  // Not the current user
+        { _id: { $nin: friendIds } }  // Not in the friendIds list
+      ]
+    }).select("name profile.profilePhoto");
+
     return res.status(200).json(users);
   } catch (error) {
-    res.status(500).json({ message: error });
+    res.status(500).json({ message: error.message });
   }
 };
+
+
 export const updateProfile = async (req, res) => {
   try {
     const { name, email, phoneNumber, bio, birthDate } = req.body;
