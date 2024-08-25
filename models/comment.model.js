@@ -19,10 +19,18 @@ const commentSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    isLike:[{
+    isLiked:[{
         type: mongoose.Schema.Types.ObjectId,
         ref:'User'
-    }]
+    }],
+    isDisliked: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    images:{
+        type: String,
+        default : ""
+    }
 },{timestamps: true})
 
 

@@ -1,9 +1,11 @@
 import {Comment} from "../models/comment.model.js";
 import {Post} from "../models/post.model.js";
 import {User} from "../models/user.model.js";
+import {getUserByCommentId} from "./user.controller.js";
 
 
 export const createComment = async (req, res) => {
+
     try {
 
         const {userId, postId,content} = req.body;
@@ -14,6 +16,7 @@ export const createComment = async (req, res) => {
                 success: false,
             })
         }
+
         const user = await User.findById(userId);
         if(!user){
             return res.status(400).json({
@@ -48,26 +51,47 @@ export const createComment = async (req, res) => {
         console.log("khum bic bug gi"+"\n"+error);
     }
 }
-export const getCommentById = async (req, res) => {
+export const getAllComment = async (req, res) => {
     try {
-        const {commentId} = req.body;
-        const comment = await Comment.findById(commentId);
-        if(!comment){
+        const postId = req.params.id;
+        if(!postId){
+            return res.status(400).json({
+                message: "Post not found",
+                success: false,
+            })
+        }
+        // const comment = await Comment.find({postId: postId});
+        // if (!comment) {
+        //     return res.status(400).json({
+        //         message: "Comment not found",
+        //         success: false,
+        //     });
+        // }
+        // Tìm tất cả các bình luận liên quan đến postId
+        const comments = await Comment.find({postId: postId});
+
+        if (!comments){
             return res.status(400).json({
                 message: "Comment not found",
                 success: false,
             })
         }
 
-        res.status(200).json({
-            comment,
+        return res.status(200).json({
+            message:"fetch comment successfully",
+            comments: comments,
             success: true,
         });
-    }
-    catch(error){
-        console.log("khum bic bug gi"+"\n"+error);
+    } catch (error) {
+        console.log(error);
+
+        return res.status(500).json({
+            message: "An error occurred while fetching comments",
+            success: false,
+        });
     }
 }
+
 
 export const updateComment = async (req, res) =>{
     try{
