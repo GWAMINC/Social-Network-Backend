@@ -14,7 +14,6 @@ export const getChat=async(req,res)=>{
   } catch (error) {
     res.status(500).json({
       success:false,
-      message: "Server error",
       message: error.message
     })
   }
@@ -22,14 +21,16 @@ export const getChat=async(req,res)=>{
 //get all chat
 export const getAllChat = async (req, res) => {
   try {
-    const userId = req.id;
+    const userId = req.params.id;
+    console.log(userId);
     const chats = await Chat.find({
       participants: { $in: [userId] },
     });
-    res.status(200).json(chats);
+    console.log(chats);
+    return res.status(200).json({chats: chats});
   } catch (error) {
     console.error("Error fetching chats:", error.message); // Log the error with a message
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Server error",
       error: error.message,
