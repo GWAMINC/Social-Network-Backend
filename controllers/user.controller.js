@@ -3,7 +3,13 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { Wall } from "../models/wall.model.js";
 import { Feed } from "../models/feed.model.js";
+
+import {Post} from "../models/post.model.js";
+import {Comment} from "../models/comment.model.js";
+
+=======
 import { Post } from "../models/post.model.js";
+
 export const register = async (req, res) => {
   try {
     const { name, email, password, phoneNumber, role } = req.body;
@@ -408,3 +414,16 @@ export const getUserByPostId = async (postId) => {
     }
 }
 
+export const getUserByCommentId = async (commentId) => {
+    try{
+        const comment = await Comment.findById(commentId);
+        if (!comment) {
+            return null;
+        }
+        const user = await User.findById(comment.userId);
+        return user;
+    }
+    catch (error){
+        console.log(error);
+    }
+}
