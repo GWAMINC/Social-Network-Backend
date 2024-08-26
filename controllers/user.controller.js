@@ -7,8 +7,6 @@ import { Feed } from "../models/feed.model.js";
 import {Post} from "../models/post.model.js";
 import {Comment} from "../models/comment.model.js";
 
-=======
-import { Post } from "../models/post.model.js";
 
 export const register = async (req, res) => {
   try {
