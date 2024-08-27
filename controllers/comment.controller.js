@@ -2,17 +2,13 @@ import {Comment} from "../models/comment.model.js";
 import {Post} from "../models/post.model.js";
 import {User} from "../models/user.model.js";
 import {getUserByCommentId} from "./user.controller.js";
-import fs from 'fs/promises';
 
 
 export const createComment = async (req, res) => {
 
     try {
-        const userId = req.id;
-        const {postId, content} = req.body;
 
-        console.log(userId, postId, content);
-
+        const {userId, postId,content} = req.body;
 
         if (!userId||!postId||!content){
             return res.status(400).json({

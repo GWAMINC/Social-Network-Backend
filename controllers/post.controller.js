@@ -9,7 +9,6 @@ export const createPost = async (req, res) => {
   try {
     const userId =req.id;
     const {content, access} = req.body;
-    console.log(userId);
 
     let images = [];
     try{
@@ -89,8 +88,9 @@ export const createPost = async (req, res) => {
 export const getAllPost = async (req, res) => {
     try {
         const userId = req.id;
-        const posts = await Post.find();
-        if (!posts) {
+        const feed = await Feed.findOne({owner: userId});
+        const posts = await Post.find({_id: feed.posts});
+        if (!posts || posts.length === 0){
             return res.status(400).json({
                 message: "No post found",
                 success: false,
