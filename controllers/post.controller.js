@@ -9,6 +9,7 @@ export const createPost = async (req, res) => {
   try {
     const userId =req.id;
     const {content, access} = req.body;
+    console.log(userId);
 
     let images = [];
     try{
