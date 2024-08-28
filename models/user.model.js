@@ -35,6 +35,10 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Wall"
     }],
+    bookmarkedPosts: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Post",
+    }],
     profile: {
         bio: {
             type: String,

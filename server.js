@@ -11,6 +11,7 @@ import chatRouter from "./routes/chat.route.js";
 import messageRouter from "./routes/message.router.js";
 import notiRoute from "./routes/notification.route.js";
 import GroupRoute from "./routes/group.route.js";
+import bookmarkRoute from "./routes/bookmark.route.js";
 
 dotenv.config();
 
@@ -39,6 +40,7 @@ app.use("/api/chat", chatRouter);
 app.use("/api/message", messageRouter);
 app.use("/api/notification", notiRoute);
 app.use("/api/group", GroupRoute);
+app.use("/api/bookmark",bookmarkRoute);
 
 app.listen(PORT, () => {
     connectDB();
