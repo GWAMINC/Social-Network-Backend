@@ -7,8 +7,8 @@ import {getUserByCommentId} from "./user.controller.js";
 export const createComment = async (req, res) => {
 
     try {
-
-        const {userId, postId,content} = req.body;
+        const userId = req.id;
+        const { postId,content} = req.body;
 
         if (!userId||!postId||!content){
             return res.status(400).json({
