@@ -13,7 +13,7 @@ import { checkAdminChat } from "../middlewares/checkAdminChat.js";
 
 const router = express.Router();
 router.route("/chats/:id").get(getChat);
-router.route("/chats").get(getAllChat);
+router.route("/all/:id").get(getAllChat);
 router.route("/chats").post(createChat);
 router.route("/chats/:id").put(checkAdminChat, updateChat);
 router.route("/chats/:id").delete(checkAdminChat, deleteChat);
