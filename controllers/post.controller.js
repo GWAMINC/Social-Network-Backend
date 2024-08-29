@@ -90,9 +90,9 @@ export const getAllPost = async (req, res) => {
         const userId = req.id;
         const feed = await Feed.findOne({owner: userId});
         const posts = await Post.find({_id: feed.posts});
-        if (!posts || posts.length === 0){
+        if (!posts || !feed){
             return res.status(400).json({
-                message: "No post found",
+                message: "Post or Feed not found",
                 success: false,
             })
         }
