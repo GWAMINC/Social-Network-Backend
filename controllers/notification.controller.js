@@ -44,9 +44,8 @@ export const getNotificationById = async (req, res) => {
 }
 
 export const getNotificationByUser = async (req, res) => {
+    const userId = req.id;
     try {
-        const {userId} = req.body;
-
         const notifications = await Notification.find({userId});
 
         if (!notifications) {

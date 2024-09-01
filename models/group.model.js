@@ -4,14 +4,21 @@ const groupSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    admin: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+      ],
     profile: {
         bio: {
             type: String,
         },
-        profilePhoto: {
+        profilePhoto: [{
             type: String,
             default: "",
-        },
+        }],
     },
     members: [{
         type: mongoose.Schema.Types.ObjectId,
