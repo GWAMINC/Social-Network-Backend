@@ -124,21 +124,6 @@ export const logout = async (req, res) => {
   }
 };
 
-// export const getAllusser = async (req, res) => {
-//   const userId=req.id;
-//   try {
-//     const currentUser =await User.findById(userId).populate('isFiend');
-//     const friendIds = currentUser.isFriend.map(friend => friend._id);
-//     const users = await User.find({
-//       _id: { $ne: userId }, 
-//       _id: { $nin: friendIds}
-//     }, "name profile.profilePhoto");
-
-//     return res.status(200).json(users);
-//   } catch (error) {
-//     res.status(500).json({ message: error });
-//   }
-// };
 export const getAllusers = async (req, res) => {
   const userId = req.id;
   try {

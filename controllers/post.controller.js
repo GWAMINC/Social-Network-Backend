@@ -2,71 +2,93 @@ import {Feed} from "../models/feed.model.js";
 import {Post} from "../models/post.model.js";
 import {User} from "../models/user.model.js";
 import {Wall} from "../models/wall.model.js";
+import {Notification} from "../models/notification.model.js";
 import {deleteImage, uploadImage} from "../controllers/media.controller.js";
 import {getUserByPostId} from "./user.controller.js";
 import fs from 'fs/promises';
 export const createPost = async (req, res) => {
   try {
-    const userId =req.id;
-    const {content, access} = req.body;
-
+    const userId = req.id; // Assuming req.id is the logged-in user's ID
+    const { content, access } = req.body;
     let images = [];
-    try{
+
+    // Handling file upload if images are included in the request
+    if (req.files) {
       images = req.files.map(file => file.path);
-    }catch (error){
-      console.log(error);
     }
+
+    // Function to upload images (assuming it's defined elsewhere)
     const uploadedImages = await uploadImage(images);
 
-
+    // Check if required fields are missing
     if (!userId || !content || !access) {
       return res.status(400).json({
-        message: "Something is missing",
+        message: "Missing required fields",
         success: false,
-      })
+      });
     }
 
+    // Check if user exists
     const user = await User.findById(userId);
     if (!user) {
       return res.status(400).json({
         message: "User not found",
         success: false,
-      })
+      });
     }
 
+    // Create a new post
     const post = new Post({
       userId: user._id,
       author: user.name,
       content: content,
       access: access,
-      images : uploadedImages,
-    })
+      images: uploadedImages,
+    });
 
-    let wall = await Wall.findOne({owner: user._id});
+    // Update the user's wall
+    let wall = await Wall.findOne({ owner: user._id });
     if (!wall) {
-      wall = new Wall ({
+      wall = new Wall({
         owner: user._id,
-        posts: [post._id]
-      })
+        posts: [post._id],
+      });
     } else {
       wall.posts.push(post._id);
     }
     await post.save();
     await wall.save();
-    let feed = await Feed.findOne({owner: user._id});
 
+    // Update the user's feed
+    let feed = await Feed.findOne({ owner: user._id });
     if (!feed) {
-      feed = new Feed ({
+      feed = new Feed({
         owner: user._id,
-        posts: [post._id]
-      })
+        posts: [post._id],
+      });
     } else {
       feed.posts.push(post._id);
     }
-
     await feed.save();
 
-    //delete temporary files
+    // Notify user's friends about the new post
+    const friends = user.isFriend; // Assuming isFriend is an array of friend IDs
+    const notifications = [];
+    for (const friendId of friends) {
+      const notification = new Notification({
+        userId: friendId,
+        content: user.name + " đã đăng 1 bài viết mới: "+ content,
+        link: post._id,
+        author: {
+          avatar: user.profile.profilePhoto,
+          name: user.name,
+      },
+      });
+      notifications.push(notification);
+    }
+    await Notification.insertMany(notifications);
+
+    // Delete temporary files (if any)
     for (const image of images) {
       try {
         await fs.unlink(image);
@@ -75,16 +97,21 @@ export const createPost = async (req, res) => {
       }
     }
 
+    // Send success response
     res.status(200).json({
       message: "Post created successfully",
       wall,
       success: true,
     });
-    console.log("Post created successfully");
+
   } catch (error) {
-    console.log(error);
+    console.error("Error creating post:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
   }
-}
+};
 export const getAllPost = async (req, res) => {
     try {
         const userId = req.id;
