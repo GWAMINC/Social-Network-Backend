@@ -116,7 +116,7 @@ export const getAllPost = async (req, res) => {
     try {
         const userId = req.id;
         const feed = await Feed.findOne({owner: userId});
-        const posts = await Post.find({_id: feed.posts});
+        const posts = await Post.find({_id: feed.posts , $or:[ {access : "public"}, {userId: userId}]});
         if (!posts || !feed){
             return res.status(400).json({
                 message: "Post or Feed not found",
