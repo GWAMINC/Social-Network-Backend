@@ -19,6 +19,10 @@ const chatSchema = new mongoose.Schema({
   groupPicture: {
     type: String,
   },
+  admin: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  }],
   createdAt: {
     type: Date,
     default: Date.now,

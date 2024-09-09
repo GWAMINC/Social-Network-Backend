@@ -6,6 +6,7 @@ import {
   updateProfile,
   getProfile,
   followUser,
+  getUser,
   unfollowUser,
   addFriend,
   getFriends,
@@ -20,6 +21,7 @@ router.route("/register").post(register);
 router.route("/login").post(login);
 router.route("/logout").post(isAuthenticated, logout);
 router.route("/getallusers").post(isAuthenticated,getAllusers);
+router.route("/getUser/:id").get(isAuthenticated, getUser);
 router.route("/profile").get(isAuthenticated, getProfile);
 router.route("/profile/update").post(isAuthenticated, updateProfile);
 router.route("/followUser").post(isAuthenticated, followUser);

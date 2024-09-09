@@ -22,11 +22,9 @@ export const getChat=async(req,res)=>{
 export const getAllChat = async (req, res) => {
   try {
     const userId = req.params.id;
-    console.log(userId);
     const chats = await Chat.find({
       participants: { $in: [userId] },
     });
-    console.log(chats);
     return res.status(200).json({chats: chats});
   } catch (error) {
     console.error("Error fetching chats:", error.message); // Log the error with a message
@@ -40,13 +38,12 @@ export const getAllChat = async (req, res) => {
 
 export const createChat = async (req, res) => {
   try {
-    const { participants, isGroupChat, groupName, groupPicture, admin} = req.body;
+    const { participants, isGroupChat, groupName, groupPicture} = req.body;
     const chat = new Chat({
-      participants,
-      isGroupChat,
-      groupName,
-      groupPicture,
-      admin
+      participants: participants,
+      isGroupChat: isGroupChat,
+      groupName: groupName,
+      groupPicture: groupPicture
     });
     await chat.save();
     res.status(200).json({

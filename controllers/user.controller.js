@@ -124,6 +124,22 @@ export const logout = async (req, res) => {
   }
 };
 
+export const getUser = async (req, res) => {
+  const userId = req.params.id;
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+        return res.status(404).json({ message: "User not found" });
+        }
+        return res.status(200).json({
+          name : user.name,
+          avatar : user.profile.profilePhoto,
+        });
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 export const getAllusers = async (req, res) => {
   const userId = req.id;
   try {
