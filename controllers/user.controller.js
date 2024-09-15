@@ -4,9 +4,8 @@ import jwt from "jsonwebtoken";
 import { Wall } from "../models/wall.model.js";
 import { Feed } from "../models/feed.model.js";
 
-import {Post} from "../models/post.model.js";
-import {Comment} from "../models/comment.model.js";
-
+import { Post } from "../models/post.model.js";
+import { Comment } from "../models/comment.model.js";
 
 export const register = async (req, res) => {
   try {
@@ -106,7 +105,7 @@ export const login = async (req, res) => {
         message: `Welcome back ${user.name}`,
         user,
         success: true,
-        token: user._id
+        token: user._id,
       });
   } catch (error) {
     console.log(error);
@@ -124,38 +123,54 @@ export const logout = async (req, res) => {
   }
 };
 
-export const getUser = async (req, res) => {
-  const userId = req.params.id;
-    try {
-        const user = await User.findById(userId);
-        if (!user) {
-        return res.status(404).json({ message: "User not found" });
-        }
-        return res.status(200).json({
-          name : user.name,
-          avatar : user.profile.profilePhoto,
-        });
-    } catch (error) {
-        console.log(error);
-    }
-}
+// export const getUser = async (req, res) => {
+//   const userId = req.params.id;
+//   try {
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+//     return res.status(200).json({
+//       name: user.name,
+//       avatar: user.profile.profilePhoto,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//   }
+// };
+export const getProfileById = async (req, res) => {
+  try {
+    const {userId} = req.body;
+    const user = await User.findById(userId)
+      .populate("isFriend")
+      .populate("isFollowed")
+      .populate("following");
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    return res.status(200).json({ user, success: true });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 
 export const getAllusers = async (req, res) => {
   const userId = req.id;
   try {
-    const currentUser = await User.findById(userId).populate('isFriend');
+    const currentUser = await User.findById(userId).populate("isFriend");
 
     if (!currentUser) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const friendIds = currentUser.isFriend.map(friend => friend._id);
+    const friendIds = currentUser.isFriend.map((friend) => friend._id);
 
     const users = await User.find({
       $and: [
-        { _id: { $ne: userId } },  // Not the current user
-        { _id: { $nin: friendIds } }  // Not in the friendIds list
-      ]
+        { _id: { $ne: userId } }, // Not the current user
+        { _id: { $nin: friendIds } }, // Not in the friendIds list
+      ],
     }).select("name profile.profilePhoto");
 
     return res.status(200).json(users);
@@ -163,7 +178,6 @@ export const getAllusers = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 export const updateProfile = async (req, res) => {
   try {
@@ -211,7 +225,10 @@ export const updateProfile = async (req, res) => {
 export const getProfile = async (req, res) => {
   try {
     const userId = req.id;
-    const user = await User.findById(userId);
+    const user = await User.findById(userId)
+      .populate("isFriend")
+      .populate("isFollowed")
+      .populate("following");
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -258,7 +275,6 @@ export const followUser = async (req, res) => {
 };
 
 export const unfollowUser = async (req, res) => {
-
   try {
     const userId = req.id;
     const { unfollowedId } = req.body;
@@ -293,22 +309,22 @@ export const unfollowUser = async (req, res) => {
 };
 
 export const addFriend = async (req, res) => {
-  const userId = req.id; 
+  const userId = req.id;
   const { friendId } = req.body;
 
   if (!friendId) {
     return res.status(400).json({ message: "ID bạn bè không hợp lệ" });
   }
   try {
-    
-    const [user, friend, userFeed, friendFeed, userWall, friendWall] = await Promise.all([
-      User.findById(userId).exec(),
-      User.findById(friendId).exec(),
-      Feed.findOne({ owner: userId }).exec(),
-      Feed.findOne({ owner: friendId }).exec(),
-      Wall.findOne({ owner: userId }).exec(),
-      Wall.findOne({ owner: friendId }).exec()
-    ]);
+    const [user, friend, userFeed, friendFeed, userWall, friendWall] =
+      await Promise.all([
+        User.findById(userId).exec(),
+        User.findById(friendId).exec(),
+        Feed.findOne({ owner: userId }).exec(),
+        Feed.findOne({ owner: friendId }).exec(),
+        Wall.findOne({ owner: userId }).exec(),
+        Wall.findOne({ owner: friendId }).exec(),
+      ]);
     if (!user) {
       return res.status(404).json({ message: "Người dùng không tồn tại." });
     }
@@ -317,10 +333,14 @@ export const addFriend = async (req, res) => {
     }
 
     if (user.isFriend.includes(friendId)) {
-      return res.status(400).json({ message: "Bạn đã là bạn bè với người dùng này." });
+      return res
+        .status(400)
+        .json({ message: "Bạn đã là bạn bè với người dùng này." });
     }
     if (userId === friendId) {
-      return res.status(400).json({ message: "Không thể thêm chính mình làm bạn." });
+      return res
+        .status(400)
+        .json({ message: "Không thể thêm chính mình làm bạn." });
     }
 
     user.isFriend.push(friendId);
@@ -343,14 +363,15 @@ export const deleteFriend = async (req, res) => {
   const userId = req.id;
   const { unFriendId } = req.body;
   try {
-    const [user, unFriend, userFeed, unFriendFeed, userWall, unFriendWall] = await Promise.all([
-      User.findById(userId).exec(),
-      User.findById(unFriendId).exec(),
-      Feed.findOne({ owner: userId }).exec(),
-      Feed.findOne({ owner: unFriendId }).exec(),
-      Wall.findOne({ owner: userId }).exec(),
-      Wall.findOne({ owner: unFriendId }).exec()
-    ]);
+    const [user, unFriend, userFeed, unFriendFeed, userWall, unFriendWall] =
+      await Promise.all([
+        User.findById(userId).exec(),
+        User.findById(unFriendId).exec(),
+        Feed.findOne({ owner: userId }).exec(),
+        Feed.findOne({ owner: unFriendId }).exec(),
+        Wall.findOne({ owner: userId }).exec(),
+        Wall.findOne({ owner: unFriendId }).exec(),
+      ]);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -360,15 +381,19 @@ export const deleteFriend = async (req, res) => {
     if (!user.isFriend.includes(unFriendId)) {
       return res
         .status(404)
-        .json({ message: "You and "+ unFriend.name + " not friends yet" });
+        .json({ message: "You and " + unFriend.name + " not friends yet" });
     }
     user.isFriend.pull(unFriendId);
     await user.save();
     unFriend.isFriend.pull(userId);
     await unFriend.save();
-    userFeed.posts = userFeed.posts.filter(postId => !unFriendWall.posts.includes(postId));
+    userFeed.posts = userFeed.posts.filter(
+      (postId) => !unFriendWall.posts.includes(postId)
+    );
     await userFeed.save();
-    unFriendFeed.posts = unFriendFeed.posts.filter(postId => !userWall.posts.includes(postId));
+    unFriendFeed.posts = unFriendFeed.posts.filter(
+      (postId) => !userWall.posts.includes(postId)
+    );
     await unFriendFeed.save();
 
     return res.status(200).json({ message: "UnFriend successully" });
@@ -401,29 +426,29 @@ export const getFriends = async (req, res) => {
 };
 
 
+
 export const getUserByPostId = async (postId) => {
-    try {
-        const post = await Post.findById(postId);
-        if (!post) {
-            return null;
-        }
-        const user = await User.findById(post.userId);
-        return user;
-    } catch (error) {
-        console.log(error);
+  try {
+    const post = await Post.findById(postId);
+    if (!post) {
+      return null;
     }
-}
+    const user = await User.findById(post.userId);
+    return user;
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 export const getUserByCommentId = async (commentId) => {
-    try{
-        const comment = await Comment.findById(commentId);
-        if (!comment) {
-            return null;
-        }
-        const user = await User.findById(comment.userId);
-        return user;
+  try {
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      return null;
     }
-    catch (error){
-        console.log(error);
-    }
-}
+    const user = await User.findById(comment.userId);
+    return user;
+  } catch (error) {
+    console.log(error);
+  }
+};

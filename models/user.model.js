@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
     }],
     following: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Wall"
+        ref: "User"
     }],
     bookmarkedPosts: [{
         type: mongoose.Schema.Types.ObjectId,

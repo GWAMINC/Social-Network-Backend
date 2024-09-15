@@ -1,5 +1,5 @@
 import express from "express";
-import {createPost, updatePost, deletePost, likePost, dislikePost, getAllPost} from "../controllers/post.controller.js";
+import {createPost, updatePost, deletePost, likePost, dislikePost, getAllPost, getPostCurrentUser} from "../controllers/post.controller.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 import {upload} from "../utils/cloudinary.js";
 
@@ -12,4 +12,5 @@ router.route("/deletePost").post(isAuthenticated,deletePost);
 router.route("/likePost").post(isAuthenticated,likePost);
 router.route("/dislikePost").post(isAuthenticated,dislikePost);
 router.route("/getAllPost").get(isAuthenticated,getAllPost);
+router.route("/getPostCurrentUser").post(isAuthenticated,getPostCurrentUser);
 export default router;
