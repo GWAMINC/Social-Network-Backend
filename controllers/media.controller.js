@@ -11,7 +11,15 @@ export const uploadImage = async (images) => {
         console.log(error);
     }
 }
-
+export const upload1Image = async (imagePath) => {
+    try {
+      const uploadedImage = await cloudinary.uploader.upload(imagePath);
+      return uploadedImage.secure_url;
+    } catch (error) {
+      console.error("Error uploading image to cloudinary:", error);
+      throw new Error("Error uploading image to cloudinary");
+    }
+  };
 export const deleteImage = async (images) => {
     try {
         for(let image of images) {

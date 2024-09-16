@@ -6,7 +6,8 @@ import { Feed } from "../models/feed.model.js";
 
 import { Post } from "../models/post.model.js";
 import { Comment } from "../models/comment.model.js";
-
+import { upload1Image } from "./media.controller.js";
+import fs from "fs/promises";
 export const register = async (req, res) => {
   try {
     const { name, email, password, phoneNumber, role } = req.body;
@@ -222,6 +223,49 @@ export const updateProfile = async (req, res) => {
     console.log(error);
   }
 };
+
+export const changeAvatar = async (req, res) => {
+  try {
+    const userId = req.id;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Không tìm thấy người dùng",
+        success: false,
+      });
+    }
+
+    if (req.file) {
+      // Gọi hàm uploadImage để xử lý upload ảnh và nhận đường dẫn đã upload
+      const uploadedImage = await upload1Image(req.file.path);
+
+      // Lưu đường dẫn ảnh vào trường profilePhoto của user
+      user.profile.profilePhoto = uploadedImage;
+
+      // Xóa file tạm sau khi đã lưu vào cơ sở dữ liệu
+      await fs.unlink(req.file.path);
+
+      // Lưu lại thông tin người dùng đã cập nhật
+      await user.save();
+
+      // Trả về thông tin người dùng đã cập nhật
+      return res.status(200).json(user);
+    }
+
+    return res.status(400).json({
+      message: "Không tìm thấy file ảnh để upload",
+      success: false,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Lỗi máy chủ nội bộ",
+      success: false,
+    });
+  }
+}; 
+
 export const getProfile = async (req, res) => {
   try {
     const userId = req.id;
