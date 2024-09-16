@@ -40,7 +40,11 @@ const postSchema = new mongoose.Schema({
     images:[{
         type: String,
         default : ""
-    }]
+    }],
+    isBookmarkedBy: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
 })
 
 export const Post = mongoose.model("Post", postSchema);
