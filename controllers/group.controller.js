@@ -142,6 +142,18 @@ export const getGroupById = async (req, res) => {
   }
 };
 
+export const getGroupsByName = async (req, res) => {
+  try {
+    const { name } = req.params;
+    const groups = await Group.find(
+      { name: new RegExp(name, "i") },
+      "_id name profile.profilePhoto"
+    );
+    res.status(200).json(groups);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 export const getGroupByUser = async (req, res) => {
   const userId = req.id;

@@ -180,6 +180,19 @@ export const getAllusers = async (req, res) => {
   }
 };
 
+export const getUsersByName = async (req, res) => {
+  try {
+    const { name } = req.params;
+    const users = await User.find(
+      { name: new RegExp(name, 'i') },
+      "_id name profile.profilePhoto"
+    );
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const updateProfile = async (req, res) => {
   try {
     const { name, email, phoneNumber, bio, birthDate } = req.body;

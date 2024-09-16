@@ -170,6 +170,20 @@ export const getPostById = async (req, res) => {
     console.log(error);
   }
 };
+
+export const getPostsByContent = async (req, res) => {
+  try {
+    const { content } = req.params;
+    const posts = await Post.find(
+      { content: new RegExp(content, "i") },
+      "_id userId content images"
+    );
+    res.status(200).json(posts);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const getPostCurrentUser = async (req, res) => {
   const {userId} = req.body;
   try {
