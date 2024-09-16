@@ -12,9 +12,14 @@ import {
   deleteFriend,
   getAllusers,
   getProfileById,
+
   getUsersByName,
+
+  changeAvatar,
+
 } from "../controllers/user.controller.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
+import { upload } from "../utils/cloudinary.js";
 
 const router = express.Router();
 
@@ -27,6 +32,7 @@ router.route("/profile").get(isAuthenticated, getProfile);
 router.route("/getProfileById").post(isAuthenticated, getProfileById);
 router.route("/getUsersByName/:name").get(isAuthenticated, getUsersByName);
 router.route("/profile/update").post(isAuthenticated, updateProfile);
+router.route("/changeAvatar").post(isAuthenticated,upload.single('profilePhoto'),changeAvatar)
 router.route("/followUser").post(isAuthenticated, followUser);
 router.route("/unfollowUser").post(isAuthenticated, unfollowUser);
 router.route("/addfriend").post(isAuthenticated, addFriend); 
