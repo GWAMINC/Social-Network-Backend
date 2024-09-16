@@ -1,17 +1,19 @@
 import { User } from "../models/user.model.js";
+import { Post } from "../models/post.model.js";
 
 export const addBookmark = async (req, res) => {
     try {
         const userId = req.id;
         const {postId} = req.body;
-
+        const post = await Post.findById(postId);
         const user = await User.findById(userId);
         if (user.bookmarkedPosts.includes(postId)) {
             return res.status(400).json({message: "Post already bookmarked"});
         }
-
+        post.isBookmarkedBy.push(userId);
         user.bookmarkedPosts.push(postId);
         await user.save();
+        await post.save();
 
         res.status(200).json({message: "Post bookmarked successfully"});
     } catch (error) {
@@ -36,13 +38,17 @@ export const deleteBookmark = async (req, res) => {
         const userId = req.id;
         const {postId} = req.body;
 
+        const post = await Post.findById(postId);
         const user = await User.findById(userId);
-        const postIndex = user.bookmarkedPosts.indexOf(postId);
-        if (postIndex === -1) {
+
+        if (!user.bookmarkedPosts.includes(postId) ||!post.isBookmarkedBy.includes(userId)) {
             return res.status(400).json({ message: "Post not bookmarked" });
         }
-        user.bookmarkedPosts.splice(postIndex, 1);
+
+        user.bookmarkedPosts.pull(postId);
+        post.isBookmarkedBy.pull(userId);
         await user.save();
+        await post.save();
 
         res.status(200).json({ message: "Post removed from bookmarks" });
     } catch (error) {
