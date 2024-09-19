@@ -8,4 +8,5 @@ router.route("/addBookmark").post(isAuthenticated,addBookmark);
 router.route("/deleteBookmark").post(isAuthenticated,deleteBookmark);
 router.route("/getBookmarks").get(isAuthenticated,getBookmarks);
 
+
 export default router;
