@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Post",
     }],
+    notInterestedPosts: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Post",
+    }],
     profile: {
         bio: {
             type: String,
