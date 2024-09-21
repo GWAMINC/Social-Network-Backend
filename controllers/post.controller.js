@@ -115,9 +115,13 @@ export const createPost = async (req, res) => {
 export const getAllPost = async (req, res) => {
   try {
     const userId = req.id;
+    const user = await User.findById(userId);
     const feed = await Feed.findOne({ owner: userId });
     let postInfos = await Post.find({
-      _id: feed.posts,
+      _id: {
+        $in: feed.posts,
+        $nin: user.notInterestedPosts
+      },
       $or: [{ access: "public" }, { userId: userId }],
     }).select("_id");
     const groups = await Group.find({ members: userId }).lean();
@@ -397,3 +401,19 @@ export const dislikePost = async (req, res) => {
     console.log(error);
   }
 };
+
+export const createNotInterestedPost = async (req, res) => {
+  try {
+    const userId = req.id;
+    const {postId} = req.body;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({message: "User not found"});
+    }
+    await user.notInterestedPosts.push(postId);
+    await user.save();
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Cannot createNotInterestedPost" });
+  }
+}
