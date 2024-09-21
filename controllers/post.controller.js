@@ -116,45 +116,43 @@ export const getAllPost = async (req, res) => {
   try {
     const userId = req.id;
     const feed = await Feed.findOne({ owner: userId });
-    const posts = await Post.find({
+    let postInfos = await Post.find({
       _id: feed.posts,
       $or: [{ access: "public" }, { userId: userId }],
-    }).lean();
+    }).select("_id");
     const groups = await Group.find({ members: userId }).lean();
 
     for (const group of groups) {
       for (const groupPostId of group.posts) {
-        const index = posts.findIndex((post) => post._id.equals(groupPostId));
-        if (index === -1) {
-          const groupPost = await Post.findById(groupPostId).lean();
-          posts.push({
-            ...groupPost,
-            group
-          });
-        } else {
-          posts[index] = {
-            ...posts[index],
-            group
-          };
-        }
+        const i = postInfos.findIndex(post => post._id.equals(groupPostId));
+        if (i !== -1)
+          postInfos.splice(i, 1);
+
+        postInfos.push({
+          _id: groupPostId,
+          group
+        });
       }
     }
-
-    if (!posts || !feed) {
+    console.log(postInfos);
+    if (!postInfos || !feed) {
       return res.status(400).json({
         message: "Post or Feed not found",
         success: false,
       });
     }
+
     const data = [];
-    for (let post of posts) {
-      const owner = await getUserByPostId(post._id);
+    for (const postInfo of postInfos) {
+      const post = await Post.findById(postInfo._id);
+      const owner = await getUserByPostId(postInfo._id);
       data.push({
         postInfo: post,
         userInfo: owner,
         likeCount: post.isLiked.length,
         dislikeCount: post.isDisliked.length,
         user: userId,
+        group: postInfo.group
       });
     }
 
