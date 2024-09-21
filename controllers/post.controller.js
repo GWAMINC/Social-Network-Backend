@@ -2,6 +2,7 @@ import { Feed } from "../models/feed.model.js";
 import { Post } from "../models/post.model.js";
 import { User } from "../models/user.model.js";
 import { Wall } from "../models/wall.model.js";
+import { Group } from "../models/group.model.js";
 import { Notification } from "../models/notification.model.js";
 import { deleteImage, uploadImage } from "../controllers/media.controller.js";
 import { getUserByPostId } from "./user.controller.js";
@@ -118,7 +119,27 @@ export const getAllPost = async (req, res) => {
     const posts = await Post.find({
       _id: feed.posts,
       $or: [{ access: "public" }, { userId: userId }],
-    });
+    }).lean();
+    const groups = await Group.find({ members: userId }).lean();
+
+    for (const group of groups) {
+      for (const groupPostId of group.posts) {
+        const index = posts.findIndex((post) => post._id.equals(groupPostId));
+        if (index === -1) {
+          const groupPost = await Post.findById(groupPostId).lean();
+          posts.push({
+            ...groupPost,
+            group
+          });
+        } else {
+          posts[index] = {
+            ...posts[index],
+            group
+          };
+        }
+      }
+    }
+
     if (!posts || !feed) {
       return res.status(400).json({
         message: "Post or Feed not found",
