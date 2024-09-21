@@ -134,7 +134,6 @@ export const getAllPost = async (req, res) => {
         });
       }
     }
-    console.log(postInfos);
     if (!postInfos || !feed) {
       return res.status(400).json({
         message: "Post or Feed not found",
@@ -155,6 +154,11 @@ export const getAllPost = async (req, res) => {
         group: postInfo.group
       });
     }
+    data.sort((data1, data2) => {
+      const time1 = Date.parse(data1.postInfo.createdAt);
+      const time2 = Date.parse(data2.postInfo.createdAt);
+      return time1 - time2;
+    });
 
     return res.status(200).json({
       posts: data,
