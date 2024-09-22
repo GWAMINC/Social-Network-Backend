@@ -2,6 +2,7 @@ import { Feed } from "../models/feed.model.js";
 import { Post } from "../models/post.model.js";
 import { User } from "../models/user.model.js";
 import { Wall } from "../models/wall.model.js";
+import { Group } from "../models/group.model.js";
 import { Notification } from "../models/notification.model.js";
 import { deleteImage, uploadImage } from "../controllers/media.controller.js";
 import { getUserByPostId } from "./user.controller.js";
@@ -116,30 +117,52 @@ export const getAllPost = async (req, res) => {
     const userId = req.id;
     const user = await User.findById(userId);
     const feed = await Feed.findOne({ owner: userId });
-    const posts = await Post.find({
+    let postInfos = await Post.find({
       _id: {
         $in: feed.posts,
         $nin: user.notInterestedPosts
       },
       $or: [{ access: "public" }, { userId: userId }],
-    });
-    if (!posts || !feed) {
+    }).select("_id");
+    const groups = await Group.find({ members: userId }).lean();
+
+    for (const group of groups) {
+      for (const groupPostId of group.posts) {
+        const i = postInfos.findIndex(post => post._id.equals(groupPostId));
+        if (i !== -1)
+          postInfos.splice(i, 1);
+
+        postInfos.push({
+          _id: groupPostId,
+          group
+        });
+      }
+    }
+    if (!postInfos || !feed) {
       return res.status(400).json({
         message: "Post or Feed not found",
         success: false,
       });
     }
+
     const data = [];
-    for (let post of posts) {
-      const owner = await getUserByPostId(post._id);
+    for (const postInfo of postInfos) {
+      const post = await Post.findById(postInfo._id);
+      const owner = await getUserByPostId(postInfo._id);
       data.push({
         postInfo: post,
         userInfo: owner,
         likeCount: post.isLiked.length,
         dislikeCount: post.isDisliked.length,
         user: userId,
+        group: postInfo.group
       });
     }
+    data.sort((data1, data2) => {
+      const time1 = Date.parse(data1.postInfo.createdAt);
+      const time2 = Date.parse(data2.postInfo.createdAt);
+      return time1 - time2;
+    });
 
     return res.status(200).json({
       posts: data,
