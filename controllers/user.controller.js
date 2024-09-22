@@ -195,47 +195,40 @@ export const getUsersByName = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { name, email, phoneNumber, bio, birthDate } = req.body;
-    if (!name || !email || !phoneNumber) {
-      return res.status(400).json({
-        message: "Something is missing",
-        success: false,
-      });
-    }
-    const userId = req.id; //middleware authentication
+    const { personalWebsite, relationship, city, address, education, job } = req.body;
+
+    const userId = req.id; // Middleware authentication
     let user = await User.findById(userId);
 
     if (!user) {
       return res.status(400).json({
-        message: "User not found",
+        message: "User not found.",
         success: false,
       });
     }
-    (user.name = name),
-      (user.email = email),
-      (user.phoneNumber = phoneNumber),
-      (user.profile.bio = bio),
-      (user.profile.birthDate = birthDate);
+
+    user.profile.PersonalWebsite = personalWebsite || user.profile.PersonalWebsite; 
+    user.profile.relationship = relationship || user.profile.relationship;
+    user.profile.city = city; 
+    user.profile.address = address;
+    user.profile.education = education || user.profile.education;
+    user.profile.job = job || user.profile.job;
 
     await user.save();
-
-    user = {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-      profile: user.profile,
-    };
-
     return res.status(200).json({
-      message: "User updated successfully",
+      message: "User updated successfully.",
       user,
       success: true,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    return res.status(500).json({
+      message: "An error occurred while updating the profile.",
+      success: false,
+    });
   }
 };
+
 
 export const changeAvatar = async (req, res) => {
   try {
