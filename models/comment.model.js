@@ -30,8 +30,13 @@ const commentSchema = new mongoose.Schema({
     images:{
         type: String,
         default : ""
-    }
-},{timestamps: true})
+    },
+    createdAt: {
+        type: Date,
+        required: true,
+        default: Date.now
+    },
+})
 
 
 
