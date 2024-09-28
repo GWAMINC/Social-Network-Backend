@@ -4,7 +4,7 @@ import isAuthenticated from "../middlewares/isAuthenticated.js";
 const router = express.Router();
 
 router.route("/createComment").post(isAuthenticated,createComment);
-router.route("/updateComment").post(updateComment);
-router.route("/deleteComment").post(deleteComment);
+router.route("/updateComment/:id").post(updateComment);
+router.route("/deleteComment/:id").post(deleteComment);
 router.route("/getAllComment/:id").get(getAllComment);
 export default router;

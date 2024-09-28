@@ -54,21 +54,17 @@ export const createComment = async (req, res) => {
 export const getAllComment = async (req, res) => {
     try {
         const postId = req.params.id;
+
         if(!postId){
             return res.status(400).json({
                 message: "Post not found",
                 success: false,
             })
         }
-        // const comment = await Comment.find({postId: postId});
-        // if (!comment) {
-        //     return res.status(400).json({
-        //         message: "Comment not found",
-        //         success: false,
-        //     });
-        // }
-        // Tìm tất cả các bình luận liên quan đến postId
-        const comments = await Comment.find({postId: postId});
+        const comments = await Comment.find({ postId: postId });
+
+        // Kiểm tra nếu không tìm thấy bình luận nào
+
 
         if (!comments){
             return res.status(400).json({
@@ -77,9 +73,27 @@ export const getAllComment = async (req, res) => {
             })
         }
 
+        const cmtdata = [];
+        for (let comment of comments){
+            const author = await getUserByCommentId(comment._id);
+
+            cmtdata.push({
+                commentInfo: comment,
+                postId: await comment.postId,
+                content: comment.content,
+                userInfo: comment.author,
+                likeCount: comment.isLiked.length,
+                dislikeCount: comment.isDisliked.length,
+                user: author._id,
+            })
+
+        }
+
+
+
         return res.status(200).json({
             message:"fetch comment successfully",
-            comments: comments,
+            comments: cmtdata,
             success: true,
         });
     } catch (error) {
@@ -95,14 +109,16 @@ export const getAllComment = async (req, res) => {
 
 export const updateComment = async (req, res) =>{
     try{
-        const {commentId, content} = req.body;
+        const commentId =req.params.id;
 
-        if (!commentId||!content){
+        if (!commentId){
             return res.status(400).json({
                 message:"Something is missing",
                 success: false,
             })
         }
+
+        const {content} = req.body;
         const comment = await Comment.findById(commentId);
 
         if(!comment){
@@ -119,6 +135,7 @@ export const updateComment = async (req, res) =>{
         res.status(200).json({
             message: "Comment updated successfully",
             success: true,
+            comment: content,
         })
 
 
@@ -131,7 +148,7 @@ export const updateComment = async (req, res) =>{
 export const deleteComment = async (req, res)=>{
 
     try{
-        const {commentId}= req.body;
+        const commentId= req.params.id;
 
 
         if(!commentId){
