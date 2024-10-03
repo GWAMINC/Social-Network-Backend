@@ -41,6 +41,10 @@ const postSchema = new mongoose.Schema({
         type: String,
         default : ""
     }],
+    videos:[{
+        type: String,
+        default : ""
+    }],
     isBookmarkedBy: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
