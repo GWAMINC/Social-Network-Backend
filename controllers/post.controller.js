@@ -181,52 +181,6 @@ export const getAllPost = async (req, res) => {
   }
 };
 
-export const getPostsPaginated = async (req, res) => {
-  try {
-    const userId = req.id;
-    const user = await User.findById(userId);
-    const feed = await Feed.findOne({ owner: userId });
-    const posts = await Post.find({
-      _id: {
-        $in: feed.posts,
-        $nin: user.notInterestedPosts,
-      },
-      $or: [{ access: "public" }, { userId: userId }],
-    });
-    if (!posts || !feed) {
-      return res.status(400).json({
-        message: "Post or Feed not found",
-        success: false,
-      });
-    }
-    const data = [];
-    for (let post of posts) {
-      const owner = await getUserByPostId(post._id);
-      const group = await Group.findOne({ posts: post._id }).lean();
-      data.push({
-        postInfo: post,
-        userInfo: owner,
-        likeCount: post.isLiked.length,
-        dislikeCount: post.isDisliked.length,
-        user: userId,
-        group,
-      });
-    }
-
-    return res.status(200).json({
-      posts: data,
-      success: true,
-    });
-  } catch (error) {
-    console.log(error);
-
-    return res.status(500).json({
-      message: "An error occurred while fetching posts",
-      success: false,
-    });
-  }
-};
-
 export const getPostById = async (req, res) => {
   try {
     const { postId } = req.body;
