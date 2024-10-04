@@ -142,6 +142,16 @@ export const getGroupById = async (req, res) => {
   }
 };
 
+export const getGroupByPostId = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const group = await Group.findOne({ posts: postId });
+    res.status(200).json(group);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const getGroupsByName = async (req, res) => {
   try {
     const { name } = req.params;
