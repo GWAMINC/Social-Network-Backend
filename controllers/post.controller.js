@@ -6,6 +6,7 @@ import { Group } from "../models/group.model.js";
 import { Notification } from "../models/notification.model.js";
 import { deleteImage, uploadImage, uploadVideo } from "../controllers/media.controller.js";
 import { getUserByPostId } from "./user.controller.js";
+import { getGroupByPostId } from "./group.controller.js";
 import fs from "fs/promises";
 export const createPost = async (req, res) => {
   try {
@@ -110,6 +111,7 @@ export const createPost = async (req, res) => {
     res.status(200).json({
       message: "Post created successfully",
       wall,
+      post,
       success: true,
     });
   } catch (error) {
@@ -120,43 +122,45 @@ export const createPost = async (req, res) => {
     });
   }
 };
+
 export const getAllPost = async (req, res) => {
   try {
     const userId = req.id;
     const user = await User.findById(userId);
     const feed = await Feed.findOne({ owner: userId });
-    let postInfos = await Post.find({
+    
+    const total = await Post.find({
       _id: {
         $in: feed.posts,
-        $nin: user.notInterestedPosts
+        $nin: user.notInterestedPosts,
       },
       $or: [{ access: "public" }, { userId: userId }],
-    }).select("_id");
-    const groups = await Group.find({ members: userId }).lean();
+    }).countDocuments();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || total;
+    const startIndex = (page - 1) * limit;
 
-    for (const group of groups) {
-      for (const groupPostId of group.posts) {
-        const i = postInfos.findIndex(post => post._id.equals(groupPostId));
-        if (i !== -1)
-          postInfos.splice(i, 1);
+    const posts = await Post.find({
+      _id: {
+        $in: feed.posts,
+        $nin: user.notInterestedPosts,
+      },
+      $or: [{ access: "public" }, { userId: userId }],
+    })
+      .skip(startIndex)
+      .limit(limit)
+      .sort({ createdAt: -1 });
 
-        postInfos.push({
-          _id: groupPostId,
-          group
-        });
-      }
-    }
-    if (!postInfos || !feed) {
+    if (!posts || !feed) {
       return res.status(400).json({
         message: "Post or Feed not found",
         success: false,
       });
     }
-
     const data = [];
-    for (const postInfo of postInfos) {
-      const post = await Post.findById(postInfo._id);
-      const owner = await getUserByPostId(postInfo._id);
+    for (let post of posts) {
+      const owner = await getUserByPostId(post._id);
+      const group = await Group.findOne({ posts: post._id });
       data.push({
         postInfo: post,
         userInfo: owner,
@@ -164,16 +168,14 @@ export const getAllPost = async (req, res) => {
         dislikeCount: post.isDisliked.length,
         user: userId,
         group: postInfo.group,
-        
       });
     }
-    data.sort((data1, data2) => {
-      const time1 = Date.parse(data1.postInfo.createdAt);
-      const time2 = Date.parse(data2.postInfo.createdAt);
-      return time1 - time2;
-    });
 
     return res.status(200).json({
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
       posts: data,
       success: true,
     });
@@ -186,6 +188,7 @@ export const getAllPost = async (req, res) => {
     });
   }
 };
+
 export const getPostById = async (req, res) => {
   try {
     const { postId } = req.body;
