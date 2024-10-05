@@ -6,7 +6,7 @@ import {upload} from "../utils/cloudinary.js";
 const router = express.Router();
 
 
-router.route("/createPost").post(isAuthenticated,upload.array('images'),createPost);
+router.route("/createPost").post(isAuthenticated, upload.fields([{ name: 'images', maxCount: 10 }, { name: 'videos', maxCount: 5 }]), createPost);
 router.route("/updatePost").post(isAuthenticated,updatePost);
 router.route("/deletePost").post(isAuthenticated,deletePost);
 router.route("/likePost").post(isAuthenticated,likePost);

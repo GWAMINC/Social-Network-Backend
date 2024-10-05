@@ -4,7 +4,7 @@ import { User } from "../models/user.model.js";
 import { Wall } from "../models/wall.model.js";
 import { Group } from "../models/group.model.js";
 import { Notification } from "../models/notification.model.js";
-import { deleteImage, uploadImage } from "../controllers/media.controller.js";
+import { deleteImage, uploadImage, uploadVideo } from "../controllers/media.controller.js";
 import { getUserByPostId } from "./user.controller.js";
 import { getGroupByPostId } from "./group.controller.js";
 import fs from "fs/promises";
@@ -13,15 +13,18 @@ export const createPost = async (req, res) => {
     const userId = req.id; // Assuming req.id is the logged-in user's ID
     const { content, access } = req.body;
     let images = [];
+    let videos =[];
 
     // Handling file upload if images are included in the request
     if (req.files) {
-      images = req.files.map((file) => file.path);
-    }
-
-    // Function to upload images (assuming it's defined elsewhere)
-    const uploadedImages = await uploadImage(images);
-
+      if (req.files['images']) {
+          images = req.files['images'].map(file => file.path);
+      }
+      if (req.files['videos']) {
+          videos = req.files['videos'].map(file => file.path);
+      }
+  }
+    
     // Check if required fields are missing
     if (!userId || !content || !access) {
       return res.status(400).json({
@@ -38,6 +41,10 @@ export const createPost = async (req, res) => {
         success: false,
       });
     }
+    // Function to upload images (assuming it's defined elsewhere)
+    const uploadedImages = await uploadImage(images);
+    const uploadVideos =await uploadVideo(videos);
+
 
     // Create a new post
     const post = new Post({
@@ -46,6 +53,7 @@ export const createPost = async (req, res) => {
       content: content,
       access: access,
       images: uploadedImages,
+      videos: uploadVideos,
     });
 
     // Update the user's wall
@@ -91,14 +99,14 @@ export const createPost = async (req, res) => {
     await Notification.insertMany(notifications);
 
     // Delete temporary files (if any)
-    for (const image of images) {
-      try {
-        await fs.unlink(image);
-      } catch (error) {
-        console.log(error);
-      }
-    }
-
+    const allFiles = [...images, ...videos];
+        for (const file of allFiles) {
+            try {
+                await fs.unlink(file);
+            } catch (error) {
+                console.log(`Error deleting file ${file}:`, error);
+            }
+        }
     // Send success response
     res.status(200).json({
       message: "Post created successfully",
@@ -159,7 +167,7 @@ export const getAllPost = async (req, res) => {
         likeCount: post.isLiked.length,
         dislikeCount: post.isDisliked.length,
         user: userId,
-        group,
+        group: postInfo.group,
       });
     }
 
