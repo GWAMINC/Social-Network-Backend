@@ -8,7 +8,7 @@ export const createComment = async (req, res) => {
 
     try {
         const userId = req.id;
-        const { postId,content} = req.body;
+        const { postId,content, parentCommentId} = req.body;
 
         if (!userId||!postId||!content){
             return res.status(400).json({
@@ -32,11 +32,23 @@ export const createComment = async (req, res) => {
             })
         }
 
+        let parentComment = null;
+        if(parentCommentId){
+            parentComment = await Comment.findById(parentCommentId);
+            if(!parentComment){
+                return res.status(400).json({
+                    message:"Parent comment not found",
+                    success: false,
+                })
+            }
+        }
+
         const comment = new Comment({
             userId: user._id,
             postId: post._id,
             author: user.name,
-            content: content
+            content: content,
+            parentCommentId: parentCommentId || null,
         })
         await comment.save();
 
@@ -61,7 +73,7 @@ export const getAllComment = async (req, res) => {
                 success: false,
             })
         }
-        const comments = await Comment.find({ postId: postId });
+        const comments = await Comment.find({ postId: postId, parentCommentId: null });
 
         // Kiểm tra nếu không tìm thấy bình luận nào
 
@@ -85,6 +97,7 @@ export const getAllComment = async (req, res) => {
                 likeCount: comment.isLiked.length,
                 dislikeCount: comment.isDisliked.length,
                 user: author._id,
+                replies: comment.replies,
             })
 
         }
@@ -103,6 +116,54 @@ export const getAllComment = async (req, res) => {
             message: "An error occurred while fetching comments",
             success: false,
         });
+    }
+}
+
+export const getAllReplies = async (req, res) => {
+    try{
+        const parentCommentId = req.params.id;
+
+        if(!parentCommentId){
+            return res.status(400).json({
+                message: "Parent comment not found",
+                success: false,
+            })
+        }
+        const replies = await Comment.find({parentCommentId: parentCommentId});
+
+        if (!replies){
+            return res.status(400).json({
+                message: "Reply not found",
+                success: false,
+            })
+        }
+
+        const repdata=[];
+        for (let reply of replies){
+            const author = await getUserByCommentId(reply._id);
+
+            repdata.push({
+                replyInfo: reply,
+                replyId: reply._id,
+                content: reply.content,
+                userInfo: reply.author,
+                likeCount: reply.isLiked.length,
+                dislikeCount: reply.isDisliked.length,
+                user: author._id,
+                replies: reply.replies,
+            })
+        }
+
+        return res.status(200).json({
+            message:"fetched replies",
+            replies: repdata,
+            success: true,
+        })
+    }
+    catch(error){
+        console.log("khum bic bug gi"+"\n"+error);
+
+
     }
 }
 
