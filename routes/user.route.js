@@ -12,7 +12,7 @@ import {
   deleteFriend,
   getAllusers,
   getProfileById,
-
+  getUser,
   getUsersByName,
 
   changeAvatar,
@@ -27,7 +27,7 @@ router.route("/register").post(register);
 router.route("/login").post(login);
 router.route("/logout").post(isAuthenticated, logout);
 router.route("/getallusers").post(isAuthenticated, getAllusers);
-// router.route("/getUser/:id").get(isAuthenticated, getUser);
+router.route("/getUser/:id").get(isAuthenticated, getUser);
 router.route("/profile").get(isAuthenticated, getProfile);
 router.route("/getProfileById").post(isAuthenticated, getProfileById);
 router.route("/getUsersByName/:name").get(isAuthenticated, getUsersByName);
