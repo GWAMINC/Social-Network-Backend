@@ -20,6 +20,7 @@ export const upload1Image = async (imagePath) => {
       throw new Error("Error uploading image to cloudinary");
     }
   };
+
 export const deleteImage = async (images) => {
     try {
         for(let image of images) {
@@ -30,4 +31,18 @@ export const deleteImage = async (images) => {
         console.log(error);
     }
 }
-
+export const uploadVideo = async (videos) => {
+    try {
+        const urls = [];
+        for (let video of videos) {
+            const uploadedVideo = await cloudinary.uploader.upload(video, {
+                resource_type: "video"  // Chỉ định rằng đây là video
+            });
+            urls.push(uploadedVideo.secure_url);
+        }
+        return urls;
+    } catch (error) {
+        console.log(error);
+        throw new Error("Error uploading videos");
+    }
+};
