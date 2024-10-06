@@ -6,7 +6,6 @@ import { Group } from "../models/group.model.js";
 import { Notification } from "../models/notification.model.js";
 import { deleteImage, uploadImage, uploadVideo } from "../controllers/media.controller.js";
 import { getUserByPostId } from "./user.controller.js";
-import { getGroupByPostId } from "./group.controller.js";
 import fs from "fs/promises";
 export const createPost = async (req, res) => {
   try {
@@ -167,7 +166,7 @@ export const getAllPost = async (req, res) => {
         likeCount: post.isLiked.length,
         dislikeCount: post.isDisliked.length,
         user: userId,
-        group: postInfo.group,
+        group,
       });
     }
 
