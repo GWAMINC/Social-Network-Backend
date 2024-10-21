@@ -131,8 +131,7 @@ export const getGroupById = async (req, res) => {
         });
       }
     }
-    res.status(200).json({group,data});
-
+    res.status(200).json({ group, data });
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({
@@ -177,34 +176,71 @@ export const getGroupByUser = async (req, res) => {
       .json({ error: "Internal server error", details: error.message });
   }
 };
-export const updateGroup = async (req, res) => {
-  try {
-    const { groupId, name, bio, profilePhoto, privacy } = req.body;
 
+export const updateGroup = async (req, res) => {
+  const userId=req.id;
+  const { groupId, name, bio, privacy } = req.body; 
+  let profilePhoto = [];
+
+  try {
     const group = await Group.findById(groupId);
     if (!group) {
-      return res.status(404).json({
-        message: "Group not found",
+      return res
+        .status(404)
+        .json({ message: "Group not found", success: false });
+    }
+    if(!group.admin.includes(userId)){
+      return res.status(403).json({message:"you is not admin"});
+  }
+    if (!name || !privacy) {
+      return res.status(400).json({
+        message: "Something is missing",
         success: false,
       });
     }
+    if (req.files && Array.isArray(req.files)) {
+      try {
+        profilePhoto = req.files.map((file) => file.path);
+      } catch (error) {
+        console.log(error);
+      }
+    }
 
+    if (name !== group.name) {
+      const existedName = await Group.findOne({ name });
+      if (existedName) {
+        return res.status(400).json({
+          message: "Name already exists",
+          success: false,
+        });
+      }
+    }
     group.name = name;
-    group.bio = bio;
-    group.profilePhoto = profilePhoto;
-    group.privacy = privacy;
-    group.updateAt = Date.now();
 
+    if (bio) group.profile.bio = bio;
+    if (profilePhoto.length > 0) {
+      const uploadedImages = await uploadImage(profilePhoto);
+      group.profile.profilePhoto = uploadedImages;
+      for (const image of profilePhoto) {
+        try {
+          await fs.unlink(image);
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    }
+    if (privacy) group.privacy = privacy;
+    group.updatedAt = Date.now();
     await group.save();
-
-    res.status(200).json({
-      message: "Group updated successfully",
-      success: true,
-    });
+    res
+      .status(200)
+      .json({ message: "Group updated successfully", group, success: true });
   } catch (error) {
-    console.log("khum bic bug gi" + "\n" + error);
+    console.error("Error updating group:", error);
+    res.status(500).json({ message: "Internal server error", success: false });
   }
 };
+
 export const deleteGroup = async (req, res) => {
   try {
     const { groupId } = req.body;
@@ -226,5 +262,148 @@ export const deleteGroup = async (req, res) => {
     });
   } catch (error) {
     console.log("khum bic bug gi" + "\n" + error);
+  }
+};
+
+export const joinGroup = async (req, res) => {
+  const userId = req.id;
+  const { groupId } = req.body;
+
+  try {
+    // Check if the group exists
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({
+        message: "Group not found",
+        success: false,
+      });
+    }
+
+    if (group.members.includes(userId)) {
+      return res.status(400).json({
+        message: "You are already a member of this group",
+        success: false,
+      });
+    }
+
+    group.members.push(userId);
+    await group.save();
+
+    res.status(200).json({
+      message: "Successfully joined the group",
+      group,
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error joining group:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+  }
+};
+
+export const removeMember = async (req, res) => {
+  const { groupId, memberId } = req.body;
+  const userId = req.id;
+  console.log(groupId);
+  console.log(memberId);
+
+  try {
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ message: "Nhóm không tồn tại" });
+    }
+    if (memberId === userId) {
+      return res
+        .status(400)
+        .json({ message: "Không thể xóa chính mình. Vui lòng cịn rời nhóm" });
+    }
+    if (group.admin.includes(memberId)) {
+      return res.status(400).json({ message: "Thành viên là admin nhóm" });
+    }
+    if (!group.members.includes(memberId)) {
+      return res
+        .status(400)
+        .json({ message: "Thành viên không có trong nhóm" });
+    }
+
+    group.members.pull(memberId);
+    await group.save();
+
+    res.status(200).json({ message: "Đã xóa thành viên thành công", group });
+  } catch (error) {
+    console.error("Lỗi khi xóa thành viên:", error);
+    res.status(500).json({ message: "Lỗi nội bộ", success: false });
+  }
+};
+
+export const addAdmin = async (req, res) => {
+  const { groupId, memberId } = req.body;
+  try {
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res
+        .status(404)
+        .json({ message: "Group not found", success: false });
+    }
+    if (group.admin.includes(memberId)) {
+      return res
+        .status(400)
+        .json({ message: "This member is already an admin", success: false });
+    }
+    if (!group.members.includes(memberId)) {
+      return res.status(400).json({
+        message: "This member is not a part of the group",
+        success: false,
+      });
+    }
+    group.admin.push(memberId);
+    await group.save();
+    res
+      .status(200)
+      .json({ message: "Admin added successfully", group, success: true });
+  } catch (error) {
+    console.error("Error adding admin:", error);
+    res.status(500).json({ message: "Internal server error", success: false });
+  }
+};
+
+export const leaveGroup = async (req, res) => {
+  const userId = req.id;
+  const { groupId } = req.body;
+  try {
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res
+        .status(404)
+        .json({ message: "Group not found", success: false });
+    }
+
+    if (!group.members.includes(userId)) {
+      return res.status(400).json({
+        message: "You are not a member of this group",
+        success: false,
+      });
+    }
+
+    if (group.admin.includes(userId)) {
+      if (group.admin.length === 1) {
+        return res.status(400).json({
+          message: "You must assign another member as admin before leaving",
+          success: false,
+        });
+      }
+      group.admin.pull(userId);
+    }
+    group.members.pull(userId);
+    await group.save();
+
+    res
+      .status(200)
+      .json({ message: "Successfully left the group", success: true });
+  } catch (error) {
+    console.error("Error leaving group:", error);
+    res.status(500).json({ message: "Internal server error", success: false });
   }
 };
