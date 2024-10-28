@@ -78,12 +78,13 @@ export const login = async (req, res) => {
         success: false,
       });
     }
-
+    
     const tokenData = {
       userId: user._id,
     };
+    const tokenExpiresIn = "1d";
     const token = await jwt.sign(tokenData, process.env.SECRET_KEY, {
-      expiresIn: "1d",
+      expiresIn: tokenExpiresIn,
     });
 
     user = {
@@ -107,6 +108,7 @@ export const login = async (req, res) => {
         user,
         success: true,
         token: user._id,
+        tokenExpiresIn,
       });
   } catch (error) {
     console.log(error);
