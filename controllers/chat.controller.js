@@ -1,4 +1,5 @@
 import {Chat} from "../models/chat.model.js";
+import {User} from "../models/user.model.js";
 
 //get chat by  id
 export const getChat=async(req,res)=>{
@@ -59,6 +60,35 @@ export const createChat = async (req, res) => {
     });
   }
 };
+
+export const getByUsername = async (req, res) => {
+  try {
+    const userId = req.id;
+    const { username } = req.params;
+    const chats = await Chat.find({
+      participants: { $in: [userId] }
+    });
+
+    const participantIds = chats.flatMap(chat => chat.participants);
+    const otherParticipantIds = participantIds.filter(id => id.toString() !== userId);
+
+    const users = await User.find({
+      _id: { $in: otherParticipantIds },
+      name: { $regex: username, $options: 'i' }
+    });
+
+    const userIds = users.map(user => user._id.toString());
+    const filteredChats = chats.filter(chat => chat.participants.some(id => userIds.includes(id.toString())));
+    res.status(200).json({ chats: filteredChats });
+  } catch (error) {
+    console.error("Error fetching chats:", error.message); // Log the error with a message
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+}
 
 export const updateChat = async (req, res) => {
   try {
