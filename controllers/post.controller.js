@@ -10,7 +10,7 @@ import fs from "fs/promises";
 export const createPost = async (req, res) => {
   try {
     const userId = req.id; // Assuming req.id is the logged-in user's ID
-    const { content, access } = req.body;
+    const { content, access, groupId } = req.body;
     let images = [];
     let videos =[];
 
@@ -54,7 +54,7 @@ export const createPost = async (req, res) => {
       images: uploadedImages,
       videos: uploadVideos,
     });
-
+    await post.save();
     // Update the user's wall
     let wall = await Wall.findOne({ owner: user._id });
     if (!wall) {
@@ -65,9 +65,8 @@ export const createPost = async (req, res) => {
     } else {
       wall.posts.push(post._id);
     }
-    await post.save();
+    
     await wall.save();
-
     // Update the user's feed
     let feed = await Feed.findOne({ owner: user._id });
     if (!feed) {
@@ -96,6 +95,25 @@ export const createPost = async (req, res) => {
       notifications.push(notification);
     }
     await Notification.insertMany(notifications);
+
+    if (groupId && groupId !== "") {
+      const group = await Group.findById(groupId);
+      if (group) {
+        if (!group.members.includes(userId)) {
+          return res.status(403).json({
+            message: "User is not a member of this group",
+            success: false,
+          });
+        }
+        group.posts.push(post._id);
+        await group.save();
+      } else {
+        return res.status(400).json({
+          message: "Group not found",
+          success: false,
+        });
+      }
+    }
 
     // Delete temporary files (if any)
     const allFiles = [...images, ...videos];
