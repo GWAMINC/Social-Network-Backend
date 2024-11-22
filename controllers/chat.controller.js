@@ -40,6 +40,21 @@ export const getAllChat = async (req, res) => {
 export const createChat = async (req, res) => {
   try {
     const { participants, isGroupChat, groupName, groupPicture} = req.body;
+
+    if (!isGroupChat) {
+      const existingChat = await Chat.findOne({
+        isGroupChat: false,
+        participants: { $all: participants, $size: participants.length }
+      });
+
+      if (existingChat) {
+        return res.status(400).json({
+          success: false,
+          message: "A chat with these participants already exists."
+        });
+      }
+    }
+
     const chat = new Chat({
       participants: participants,
       isGroupChat: isGroupChat,
