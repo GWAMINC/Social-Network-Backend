@@ -7,10 +7,11 @@ import { Notification } from "../models/notification.model.js";
 import { deleteImage, uploadImage, uploadVideo } from "../controllers/media.controller.js";
 import { getUserByPostId } from "./user.controller.js";
 import fs from "fs/promises";
+import { userInfo } from "os";
 export const createPost = async (req, res) => {
   try {
     const userId = req.id; // Assuming req.id is the logged-in user's ID
-    const { content, access, groupId } = req.body;
+    const { content, access, groupId, sharedpost} = req.body;
     let images = [];
     let videos =[];
 
@@ -53,6 +54,7 @@ export const createPost = async (req, res) => {
       access: access,
       images: uploadedImages,
       videos: uploadVideos,
+      sharedPost:sharedpost,
     });
     await post.save();
     // Update the user's wall
@@ -178,6 +180,12 @@ export const getAllPost = async (req, res) => {
     for (let post of posts) {
       const owner = await getUserByPostId(post._id);
       const group = await Group.findOne({ posts: post._id });
+      const issharedpostingroup =await Group.findOne({posts:post.sharedPost})
+      let sharedPost;
+      if(post.sharedPost){
+        sharedPost=await Post.findById(post.sharedPost.toString())
+        console.log(sharedPost);
+      }   
       data.push({
         postInfo: post,
         userInfo: owner,
@@ -185,6 +193,11 @@ export const getAllPost = async (req, res) => {
         dislikeCount: post.isDisliked.length,
         user: userId,
         group,
+        sharedPost:{
+          sharedPost:sharedPost,
+          userInfo: await getUserByPostId(post.sharedPost),
+          group:issharedpostingroup
+        }
       });
     }
 
